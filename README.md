@@ -10,7 +10,7 @@ Install dependencies, It is generally recommended you do this inside virtual env
 ```
 -pip install requirements.txt 
 ```
-Set up your environment using [spotify API]('https://developer.spotify.com/dashboard') as following.
+Set up your environment using [spotify API](https://developer.spotify.com/dashboard) as following.
 ```
 SPOTIFY_CLIENT_ID=[your client id]
 SPOTIFY_CLIENT_SECRET=[your client secret]
@@ -28,7 +28,7 @@ python app.py
 - If the program error you either (a) go back to home page (/home) or (b) remove your save file then re-login or (c) terminate then run the program again or all of them should fix it.
 - Program is massively unoptimize so it'll take a while if you got gajillion songs in your playlist but hey its work
 - You are **recommended to close any other spotify instance** while you run this
-- You should **close tab** first then terminate program otherwise you might face the same [abomination]('https://media.discordapp.net/attachments/540130478653702154/1343193200067739750/image.png?ex=67bc61a6&is=67bb1026&hm=353cba0d51c89b0eee85a29c4c466c2e60a05563bf5c848ecea3792901094e81&=&format=webp&quality=lossless&width=252&height=714) as me
+- You should **close tab** first then terminate program otherwise you might face the same [abomination](https://media.discordapp.net/attachments/540130478653702154/1343193200067739750/image.png?ex=67bc61a6&is=67bb1026&hm=353cba0d51c89b0eee85a29c4c466c2e60a05563bf5c848ecea3792901094e81&=&format=webp&quality=lossless&width=252&height=714) as me
 
 
 
