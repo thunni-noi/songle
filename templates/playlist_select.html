@@ -1,0 +1,132 @@
+<!-- In your Flask template (e.g., index.html) -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Playlist Selector | Spotify Style</title>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='playlist_select.css')}}">
+</head>
+<body>
+    <div class="container">
+        <div class="app-header">
+            <div class="logo">
+                <i class="fas fa-music"></i>
+            </div>
+            <h1>Spotify Playlists</h1>
+        </div>
+
+        <form id="playlist-selection-form" method="POST" action="{{ url_for('submit_selected_playlist') }}">
+            <div class="filter-section">
+                <div class="form-group">
+                    <label for="playlist-select">SELECT PLAYLIST</label>
+                    <select id="playlist-select" name="playlist" class="playlist-dropdown" style="width: 100%;">
+                        <option></option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button type="button" class="secondary-button spotify-button" id="back-button">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+
+                <button type="button" class="circular-button" id="refresh-button" title="Refresh">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+
+                <button type="submit" class="primary-button spotify-button" id="submit-button">
+                    <i class="fas fa-check"></i> Submit
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // Initialize playlist dropdown
+            $('#playlist-select').select2({
+                placeholder: 'Search for a playlist...',
+                allowClear: true,
+                ajax: {
+                    url: "{{ url_for('get_playlist_list') }}",
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            search: params.term || '',
+                            page: params.page || 1
+                        };
+                    },
+                    processResults: function (data, params) {
+                        return {
+                            results: data.playlists,
+                            pagination: {
+                                more: data.has_more
+                            }
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 0,
+                templateResult: formatPlaylist,
+                templateSelection: formatPlaylistSelection
+            });
+
+            // Back button functionality
+            $('#back-button').on('click', function() {
+                window.history.back();
+            });
+
+            // Refresh button functionality
+            $('#refresh-button').on('click', function() {
+                // Show loading animation on the button
+                const $refreshIcon = $(this).find('i');
+                $refreshIcon.addClass('fa-spin');
+
+                // Call the refresh endpoint
+                $.ajax({
+                    url: "{{ url_for('refresh_playlist_list') }}",
+                    type: 'POST',
+                    success: function(response) {
+                        // Reset the dropdown
+                        $('#playlist-select').val(null).trigger('change');
+
+                        // Show success message
+                        alert(response.message || "Refresh successful!");
+                    },
+                    error: function() {
+                        alert("Error refreshing data. Please try again.");
+                    },
+                    complete: function() {
+                        // Stop the loading animation
+                        $refreshIcon.removeClass('fa-spin');
+                    }
+                });
+            });
+
+            function formatPlaylist(playlist) {
+                if (!playlist.id) return playlist.text;
+
+                var $container = $(
+                    '<div class="playlist-result">' +
+                        '<img src="' + playlist.cover_image + '" class="playlist-cover" />' +
+                        '<div class="playlist-info">' +
+                            '<div class="playlist-title">' + playlist.title + '</div>' +
+                            '<div class="playlist-tracks">' + playlist.total_tracks + ' tracks</div>' +
+                        '</div>' +
+                    '</div>'
+                );
+
+                return $container;
+            }
+
+            function formatPlaylistSelection(playlist) {
+                return playlist.title || playlist.text;
+            }
+        });
+    </script>
+</body>
+</html>

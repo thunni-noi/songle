@@ -1,0 +1,521 @@
+<!-- In your Flask template (e.g., index.html) -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Track Selector | Spotify Style</title>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <script src="https://sdk.scdn.co/spotify-player.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='track_player.css')}}">
+</head>
+<body>
+    <div class="container">
+        <div class="app-header">
+            <div class="logo">
+                <i class="fas fa-music"></i>
+            </div>
+            <h1>Songle!</h1>
+        </div>
+        <h2>Do not open any other spotify instance else the program might bugged out</h2>
+        <div class="container">
+            <div class="player-controls">
+                <button id="play-button" class="play-button" disabled>
+                    <i class="fas fa-play"></i>
+                </button>
+                
+    
+                <div class="progress-container">
+                    <div class="progress-bar" id="progress-bar">
+                        <div class="progress" id="progress"></div>
+                    </div>
+                    <div class="time-display">
+                        <span id="current-time">0:00</span>
+                        <span id="total-time">0:00</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="debug-log"></div>
+        </div>
+
+        <form id="track-selection-form" method="POST" action="{{ url_for('placeholder') }}">
+            <div class="select-section">
+                <label for="track-select" id="attempt-label">ATTEMPT 1 / 4</label>
+                <select id="track-select" name="track" style="width: 100%;">
+                    <option></option>
+                </select>
+            </div>
+
+            <div class="button-group">
+                <button type="button" class="secondary-button spotify-button" id="back-button">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+
+                <button type="button" class="circular-button" id="refresh-button" title="Refresh">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+
+                <button type="submit" class="primary-button spotify-button" id="submit-button">
+                    <i class="fas fa-check"></i> Submit
+                </button>
+
+                <button type="button" class="secondary-button spotify-button" id="skip-button">
+                    <i class="fas fa-arrow-left"></i> Skip
+                </button>
+                
+            </div>
+        </form>
+
+        <div id="result-section" class="select-section" style="display: none;">
+            <div class="result-header"></div>
+            <div class="track-details">
+                <img id="track-cover" class="track-cover-large" alt="Track Cover">
+                <div class="track-info-large">
+                    <div id="track-title" class="track-title-large"></div>
+                    <div id="track-artist" class="track-artist-large"></div>
+                </div>
+            </div>
+            <button id="next-song-button" class="primary-button spotify-button">
+                <i class="fas fa-forward"></i> Next Song
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        function updateAttemptCounter(attempt) {
+            const attemptLabel = document.getElementById('attempt-label');
+            attemptLabel.textContent = `ATTEMPT ${attempt} / 4`;
+        }
+
+        function formatDuration(ms) {
+            const minutes = Math.floor(ms / 60000);
+            const seconds = ((ms % 60000) / 1000).toFixed(0);
+            return `${minutes}:${seconds.padStart(2, '0')}`;
+        }
+
+        $(document).ready(function() {
+            // Initialize track dropdown
+            $('#track-select').select2({
+                placeholder: 'Search for a track...',
+                allowClear: true,
+                ajax: {
+                    url: "{{ url_for('get_playlist_tracks') }}",
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            search: params.term || '',
+                            page: params.page || 1
+                        };
+                    },
+                    processResults: function (data, params) {
+                        return {
+                            results: data.tracks,
+                            pagination: {
+                                more: data.has_more
+                            }
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 0,
+                templateResult: formatTrack,
+                templateSelection: formatTrackSelection
+            });
+
+            // Back button functionality
+            $('#back-button').on('click', function() {
+                window.history.back();
+            });
+
+            // Refresh button functionality
+            $('#refresh-button').on('click', function() {
+                const $refreshIcon = $(this).find('i');
+                $refreshIcon.addClass('fa-spin');
+
+                $.ajax({
+                    url: "{{ url_for('placeholder') }}",
+                    type: 'POST',
+                    success: function(response) {
+                        $('#track-select').val(null).trigger('change');
+                        alert(response.message || "Refresh successful!");
+                    },
+                    error: function() {
+                        alert("Error refreshing data. Please try again.");
+                    },
+                    complete: function() {
+                        $refreshIcon.removeClass('fa-spin');
+                    }
+                });
+            });
+
+            function formatTrack(track) {
+                if (!track.id) return track.text;
+
+                var $container = $(
+                    '<div class="track-result">' +
+                        '<img src=' + track.cover_img + ' class="track-cover" />' +
+                        '<div class="track-info">' +
+                            '<div class="track-title">' + track.title + '</div>' +
+                            '<div class="track-artist">' + track.artist + '</div>' +
+                        '</div>' +
+                        '<div class="track-duration">' + formatDuration(track.durations_ms) + '</div>' +
+                    '</div>'
+                );
+
+                return $container;
+            }
+
+            function formatTrackSelection(track) {
+                return track.title ? track.title + ' - ' + track.artist : track.text;
+            }
+        });
+
+        function log(message) {
+            const debugLog = document.getElementById('debug-log');
+            const timestamp = new Date().toLocaleTimeString();
+            debugLog.innerHTML += `${timestamp}: ${message}<br>`;
+            debugLog.scrollTop = debugLog.scrollHeight;
+            console.log(`${timestamp}: ${message}`);
+        }
+
+        function formatTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        let currentTrack = {
+            duration: 0,
+            elapsed: 0,
+            isPlaying: false,
+            progressInterval: null,
+            player: null
+        };
+
+        function updateTimeDisplay(elapsed, total) {
+            document.getElementById('current-time').textContent = formatTime(elapsed);
+            document.getElementById('total-time').textContent = formatTime(total);
+
+            const progress = (elapsed / total) * 100;
+            document.getElementById('progress').style.width = `${Math.min(progress, 100)}%`;
+        }
+
+        function startProgressUpdate(duration) {
+            log('start progress update')
+            if (currentTrack.progressInterval) {
+                clearInterval(currentTrack.progressInterval);
+            }
+
+            currentTrack.duration = duration;
+            currentTrack.elapsed = 0;  // Reset elapsed time
+            currentTrack.isPlaying = true;
+
+            //timeout
+            setTimeout(() => {
+                forcePause();
+            }, duration);
+
+            currentTrack.progressInterval = setInterval(() => {
+                if (!currentTrack.isPlaying) return;
+
+                currentTrack.elapsed += 100;  // Increment by 100ms each interval
+                if (currentTrack.elapsed >= currentTrack.duration) {
+                    forcePause();
+                } else {
+                    updateTimeDisplay(currentTrack.elapsed, currentTrack.duration);
+                }
+            }, 100);  // Update every 100ms
+        }
+
+        async function forcePause() {
+            if (currentTrack.player) {
+                await currentTrack.player.pause();
+                log('Playback paused');
+            }
+
+            currentTrack.isPlaying = false;
+            if (currentTrack.progressInterval) {
+                clearInterval(currentTrack.progressInterval);
+                currentTrack.progressInterval = null;
+            }
+
+            // Update UI
+            document.getElementById('play-button').innerHTML = '<i class="fas fa-play"></i>';
+            updateTimeDisplay(currentTrack.duration, currentTrack.duration);
+            document.getElementById('submit-button').disabled = false;
+
+        }
+
+        window.onSpotifyWebPlaybackSDKReady = () => {
+            log('Spotify Web Playback SDK is ready');
+
+            fetch("{{ url_for('get_spotify_token') }}")
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    if (!data.token) throw new Error('No token received from server');
+                    log('Token received successfully');
+                    log(data.token)
+                    initializePlayer(data.token);
+                })
+                .catch(error => log(`Error getting token: ${error.message}`));
+        };
+
+        function initializePlayer(token) {
+            const player = new Spotify.Player({
+                name: 'Songle',
+                getOAuthToken: cb => cb(token),
+                volume: 0.5
+            });
+
+            // Store player instance
+            currentTrack.player = player;
+
+            // Error handlers
+            player.addListener('initialization_error', ({ message }) => {
+                log(`Initialization error: ${message}`);
+            });
+
+            player.addListener('authentication_error', ({ message }) => {
+                log(`Authentication error: ${message}`);
+            });
+
+            player.addListener('account_error', ({ message }) => {
+                log(`Account error: ${message}`);
+            });
+
+            player.addListener('playback_error', ({ message }) => {
+                log(`Playback error: ${message}`);
+            });
+
+            player.addListener('player_state_changed', state => {
+                if (state) {
+                    log('Playback state updated');
+                    const track = state.track_window.current_track;
+                }
+            });
+
+            player.addListener('ready', ({ device_id }) => {
+                log(`Ready with Device ID: ${device_id}`);
+                window.spotifyDeviceId = device_id;
+                document.getElementById('play-button').disabled = false;
+            });
+
+            player.addListener('not_ready', ({ device_id }) => {
+                log(`Device ID has gone offline: ${device_id}`);
+                document.getElementById('play-button').disabled = true;
+            });
+
+            player.connect().then(success => {
+                if (success) {
+                    log('Successfully connected to Spotify player');
+                } else {
+                    log('Failed to connect to Spotify player');
+                }
+            });
+
+            // Play button click handler
+            document.getElementById('play-button').addEventListener('click', async () => {
+                log('Play button clicked');
+
+                if (currentTrack.isPlaying) {
+                    await forcePause();
+                    return;
+                }
+
+                fetch("{{ url_for('get_track_to_play') }}")
+                    .then(response => response.json())
+                    .then(async data => {  // Made this async
+                        log(`Starting playback of track: ${data.uri}`);
+                        document.getElementById('play-button').innerHTML = '<i class="fas fa-pause"></i>';
+                        document.getElementById('submit-button').disabled = true;
+
+                        // Start the Spotify playback first
+                        const playbackResponse = await fetch("{{ url_for('play_track') }}", {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                device_id: window.spotifyDeviceId,
+                                uri: data.uri
+                            })
+                        });
+
+                        const playbackData = await playbackResponse.json();
+
+                        if (playbackData.success) {
+                            log('Playback started successfully');
+                            // Only start progress tracking after successful playback start
+                            startProgressUpdate(data.duration); // 1 second duration
+                        } else {
+                            log('Failed to start playback');
+                            await forcePause();
+                        }
+                    })
+                    .catch(async error => {
+                        log(`Error during playback: ${error.message}`);
+                        await forcePause();
+                    });
+            });
+
+            // Progress bar click handler
+            document.getElementById('progress-bar').addEventListener('click', (e) => {
+                if (!currentTrack.isPlaying) return;
+
+                const progressBar = e.currentTarget;
+                const rect = progressBar.getBoundingClientRect();
+                const clickPosition = (e.clientX - rect.left) / rect.width;
+                const newTime = clickPosition * currentTrack.duration;
+
+                currentTrack.startTime = Date.now() - newTime;
+                updateTimeDisplay(newTime, currentTrack.duration);
+            });
+        }
+
+        window.onunload = disconnectPlayer;
+
+        function disconnectPlayer(){
+            if (typeof currentTrack.player !== "undefined"){
+                currentTrack.player.disconnect()
+            }
+            else{
+                log('what')
+            }
+        };
+        function showResult(data){
+            const resultSection = document.getElementById('result-section');
+            const resultHeader = resultSection.querySelector('.result-header');
+                //log(data.track)
+                // Show the result section
+
+            updateAttemptCounter(data.attempts);
+
+            if (data.success) {
+                resultSection.style.display = 'block';
+                // Success case
+                resultHeader.className = 'result-header success-header';
+                resultHeader.textContent = 'Congratulations! You got it right in ' + data.attempts + ' attempts! 🎉';
+
+                // Update track details
+                document.getElementById('track-cover').src = data.track.cover_img;
+                document.getElementById('track-title').textContent = data.track.title;
+                document.getElementById('track-artist').textContent = data.track.artist;
+
+                // Disable the form
+                document.getElementById('track-selection-form').style.opacity = '0.5';
+                document.getElementById('submit-button').disabled = true;
+
+            } else {
+                if (data.attempts >= 5) {
+                    resultSection.style.display = 'block';
+                    // Failure case
+                    resultHeader.className = 'result-header failure-header';
+                    resultHeader.textContent = 'Sorry, you\'ve run out of attempts. Here\'s the song you were trying to guess:';
+
+                    // Update track details
+                    document.getElementById('track-cover').src = data.track.cover_img;
+                    document.getElementById('track-title').textContent = data.track.title;
+                    document.getElementById('track-artist').textContent = data.track.artist;
+
+                    // Disable the form
+                    document.getElementById('track-selection-form').style.opacity = '0.5';
+                    document.getElementById('submit-button').disabled = true;
+                } else {
+                    // Wrong answer but still has attempts
+                    alert(`Incorrect answer. You have ${5 - data.attempts} attempts remaining.`);
+                    return;
+                }
+            }
+
+            // Scroll to result section
+            resultSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        $('#skip-button').on('click', function() {
+            log('skipping')
+            updateAttemptCounter(4);
+            const skipData = new FormData();
+            skipData.append('skip', 'true');
+
+            fetch("{{ url_for('songle_check_answer') }}", {
+                method: 'POST',
+                body: skipData
+            })
+            .then(response => response.json())
+            .then(data => {
+                showResult(data)
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+
+        });
+
+        document.getElementById('track-selection-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+
+            log(formData)
+
+            fetch("{{ url_for('songle_check_answer') }}", {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                showResult(data)
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+        });
+
+        // Add Next Song button functionality
+        document.getElementById('next-song-button').addEventListener('click', function() {
+            fetch("{{ url_for('get_another_song') }}")
+                .then(response => response.json())
+                .then(data => {
+                    log(data.success)
+                    if (data.success) {
+                        updateAttemptCounter(1);
+                        updateTimeDisplay(0,0);
+                        // Reset the form
+                        document.getElementById('track-selection-form').style.opacity = '1';
+                        document.getElementById('submit-button').disabled = false;
+                        document.getElementById('track-selection-form').reset();
+
+                        // Hide the result section
+                        document.getElementById('result-section').style.display = 'none';
+
+                        // Reset the player if it exists
+                        if (currentTrack.player) {
+                            forcePause();
+                        }
+
+                        // Optional: Show success message
+                        alert('New song loaded! Ready to play!');
+                    } else {
+                        alert('Failed to load new song. Please try again.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while loading a new song.');
+                });
+        });
+
+
+    </script>
+</body>
+</html>

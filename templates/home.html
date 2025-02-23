@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Welcome to Songle!</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='home.css')}}">
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <i class="fas fa-music"></i>
+        </div>
+        <h1>Welcome to Songle!</h1>
+        <p class="subtitle">How well do you know your playlists?</p>
+
+
+        <form action="{{ url_for('start_game') }}" method="POST">
+            <div class="form-group">
+                <input type="text"
+                       name="username"
+                       class="username-input"
+                       placeholder="Enter your username"
+                       required
+                       minlength="3"
+                       maxlength="20"
+                       pattern="[A-Za-z0-9_-]+"
+                       title="Username can contain letters, numbers, underscores and hyphens">
+                <p class="mini-subtitle">Note that your username is only for saving file in your pc</p>
+                <button type="submit" class="submit-button">
+                    Start Playing <i class="fas fa-play"></i>
+                </button>
+            </div>
+        </form>
+
+        <div class="features">
+            <div class="feature">
+                <i class="fas fa-headphones"></i>
+                <h3>Listen</h3>
+                <p>Preview songs from your playlist(s)</p>
+            </div>
+            <div class="feature">
+                <i class="fas fa-music"></i>
+                <h3>Guess</h3>
+                <p>Test your knowledge of your own music taste!</p>
+            </div>
+            <div class="feature">
+                <i class="fas fa-trophy"></i>
+                <h3>Made by</h3>
+                <p>me! :3</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
