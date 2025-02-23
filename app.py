@@ -1,5 +1,7 @@
 import os
 import random
+from threading import Timer
+import time
 from pathlib import Path
 from typing import Optional
 import json
@@ -101,6 +103,7 @@ def index():
 def home():
     return render_template('home.html')
 
+
 @app.route('/start_game', methods=['POST'])
 def start_game():
     username = request.form.get('username')
@@ -108,7 +111,6 @@ def start_game():
         session['username'] = username
         return redirect(url_for('authorize'))
     return redirect(url_for('index'))
-
 
 
 # spotify auth functions
@@ -350,7 +352,7 @@ def songle():
     session['attempts'] = 1
     session['play_duration'] = [0, 1, 3, 5, 10, 30][session['attempts']] * 1000
     context = {
-        'attempt' : session['attempts']
+        'attempt': session['attempts']
     }
     return render_template('track_player.html', **context)
 
@@ -386,7 +388,13 @@ def play_track():
     print(f'playing {uri}')
 
     client = generate_spotify_client()
+
+    def pause_playback():
+        client.pause_playback(device_id=device_id)
+
     client.start_playback(device_id=device_id, uris=[uri], position_ms=0)
+    timer = Timer(session.get('play_duration') / 1000, pause_playback)
+    timer.start()
     return jsonify({'success': True})
 
 

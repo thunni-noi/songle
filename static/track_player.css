@@ -1,0 +1,413 @@
+:root {
+    --spotify-black: #121212;
+    --spotify-dark-gray: #181818;
+    --spotify-light-gray: #282828;
+    --spotify-green: #1DB954;
+    --spotify-white: #FFFFFF;
+    --spotify-text-gray: #B3B3B3;
+}
+
+body {
+    background-color: var(--spotify-black);
+    color: var(--spotify-white);
+    font-family: 'Circular', Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 30px;
+}
+
+.app-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.logo {
+    margin-right: 15px;
+    color: var(--spotify-green);
+    font-size: 28px;
+}
+
+h1 {
+    font-size: 28px;
+    margin: 0;
+    font-weight: 700;
+}
+h2 {
+    font-size: 12px;
+    margin: 0;
+    font-weight: 100;
+}
+
+.select-section {
+    background-color: var(--spotify-dark-gray);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: var(--spotify-text-gray);
+}
+
+/* Custom Select2 styling */
+.select2-container--default .select2-selection--single {
+    background-color: var(--spotify-light-gray);
+    border: none;
+    border-radius: 4px;
+    height: 40px;
+    color: var(--spotify-white);
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: var(--spotify-white);
+    line-height: 40px;
+    padding-left: 15px;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 40px;
+}
+
+.select2-dropdown {
+    background-color: var(--spotify-light-gray);
+    border: none;
+    max-height: calc(80vh - 100px); /* 80% of viewport height minus some padding */
+    overflow-y: auto;
+}
+
+.select2-results {
+    max-height: none !important; /* Override Select2's default fixed height */
+}
+
+.select2-results__options {
+    max-height: none !important; /* Override Select2's default fixed height */
+}
+
+.select2-container--default .select2-results__option {
+    padding: 8px 15px;
+}
+
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: var(--spotify-green);
+}
+
+.select2-search--dropdown .select2-search__field {
+    background-color: var(--spotify-black);
+    color: var(--spotify-white);
+    border: 1px solid var(--spotify-light-gray);
+    padding: 8px;
+    border-radius: 4px;
+}
+
+/* Add smooth scrolling to the dropdown */
+.select2-results__options {
+    scrollbar-width: thin;
+    scrollbar-color: var(--spotify-green) var(--spotify-light-gray);
+}
+
+/* Webkit scrollbar styling */
+.select2-results__options::-webkit-scrollbar {
+    width: 8px;
+}
+
+.select2-results__options::-webkit-scrollbar-track {
+    background: var(--spotify-light-gray);
+    border-radius: 4px;
+}
+
+.select2-results__options::-webkit-scrollbar-thumb {
+    background-color: var(--spotify-green);
+    border-radius: 4px;
+}
+
+.track-result {
+    display: flex;
+    align-items: center;
+    padding: 5px;
+}
+
+.track-cover {
+    width: 50px;
+    height: 50px;
+    margin-right: 15px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.track-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.track-title {
+    font-weight: bold;
+    color: var(--spotify-white);
+}
+
+.track-artist {
+    font-size: 0.9em;
+    color: var(--spotify-text-gray);
+}
+
+.track-duration {
+    margin-left: auto;
+    color: var(--spotify-text-gray);
+    font-size: 0.9em;
+}
+
+.button-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+}
+
+.spotify-button {
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: none;
+}
+
+.primary-button {
+    background-color: var(--spotify-green);
+    color: var(--spotify-black);
+}
+
+.primary-button:diabled {
+    background-color: var(--spotify-black);
+    color: var(--spotify-green);
+    cursor: not-allowed;
+}
+
+.primary-button:hover {
+    background-color: #1ed760;
+    transform: scale(1.04);
+}
+
+.secondary-button {
+    background-color: transparent;
+    color: var(--spotify-white);
+    border: 1px solid var(--spotify-white);
+}
+
+.secondary-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: scale(1.04);
+}
+
+.circular-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--spotify-white);
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.circular-button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+.player-controls {
+    background-color: var(--spotify-dark-gray);
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.play-button {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: var(--spotify-green);
+    border: none;
+    color: var(--spotify-black);
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.play-button:hover {
+    transform: scale(1.1);
+    background-color: #1ed760;
+}
+
+.play-button:disabled {
+    background-color: var(--spotify-light-gray);
+    cursor: not-allowed;
+}
+
+.now-playing {
+    color: var(--spotify-text-gray);
+    font-size: 0.9em;
+}
+
+.progress-bar {
+    flex-grow: 1;
+    height: 4px;
+    background-color: var(--spotify-light-gray);
+    border-radius: 2px;
+    position: relative;
+}
+
+.progress {
+    position: absolute;
+    height: 100%;
+    background-color: var(--spotify-green);
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.1s linear;
+}
+
+.progress-container {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 100%; /* Add this */
+    margin: 0 10px; /* Add this for some spacing around the container */
+}
+
+#debug-log {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: var(--spotify-light-gray);
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--spotify-text-gray);
+    max-height: 100px;
+    overflow-y: auto;
+}
+
+.result-header {
+    text-align: center;
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 30px;
+    padding: 20px;
+    border-radius: 12px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.success-header {
+    background: linear-gradient(45deg, rgba(29, 185, 84, 0.15), rgba(29, 185, 84, 0.05));
+    color: var(--spotify-green);
+    border: 2px solid rgba(29, 185, 84, 0.2);
+}
+
+.failure-header {
+    background: linear-gradient(45deg, rgba(255, 55, 55, 0.15), rgba(255, 55, 55, 0.05));
+    color: #ff3737;
+    border: 2px solid rgba(255, 55, 55, 0.2);
+}
+
+.track-details {
+    display: flex;
+    align-items: center;
+    padding: 30px;
+    background: linear-gradient(145deg, var(--spotify-dark-gray), var(--spotify-light-gray));
+    border-radius: 16px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease;
+}
+
+.track-details:hover {
+    transform: translateY(-5px);
+}
+
+.track-cover-large {
+    width: 180px;
+    height: 180px;
+    border-radius: 12px;
+    margin-right: 30px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease;
+}
+
+.track-cover-large:hover {
+    transform: scale(1.05);
+}
+
+.track-info-large {
+    flex-grow: 1;
+    padding: 10px;
+}
+
+.track-title-large {
+    font-size: 32px;
+    font-weight: 800;
+    margin-bottom: 12px;
+    color: var(--spotify-white);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.track-artist-large {
+    font-size: 22px;
+    color: var(--spotify-text-gray);
+    font-weight: 500;
+}
+
+#next-song-button {
+    width: 100%;
+    margin-top: 30px;
+    padding: 16px;
+    font-size: 18px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+#next-song-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Add animation for result section appearance */
+#result-section {
+    animation: slideUp 0.5s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

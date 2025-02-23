@@ -194,6 +194,7 @@
             elapsed: 0,
             isPlaying: false,
             progressInterval: null,
+            timeout: null,
             player: null
         };
 
@@ -205,50 +206,68 @@
             document.getElementById('progress').style.width = `${Math.min(progress, 100)}%`;
         }
 
-        function startProgressUpdate(duration) {
-            log('start progress update')
+       async function startProgressUpdate(duration) {
+            log('start progress update');
             if (currentTrack.progressInterval) {
                 clearInterval(currentTrack.progressInterval);
             }
+            if (currentTrack.timeout) {
+                clearTimeout(currentTrack.timeout);
+            }
 
             currentTrack.duration = duration;
-            currentTrack.elapsed = 0;  // Reset elapsed time
-            currentTrack.isPlaying = true;
+            currentTrack.elapsed = 0;
 
-            //timeout
-            setTimeout(() => {
-                forcePause();
-            }, duration);
+            // Wait a short moment to ensure playback has actually started
+            await new Promise(resolve => setTimeout(resolve, 100));
 
+            // Set timeout to stop playback after duration
+            currentTrack.timeout = setTimeout(async () => {
+                log('Duration reached, stopping playback');
+                await forcePause();
+            }, duration + 1000);
+
+            // Start progress tracking
             currentTrack.progressInterval = setInterval(() => {
                 if (!currentTrack.isPlaying) return;
 
-                currentTrack.elapsed += 100;  // Increment by 100ms each interval
+                currentTrack.elapsed += 100;
                 if (currentTrack.elapsed >= currentTrack.duration) {
                     forcePause();
                 } else {
                     updateTimeDisplay(currentTrack.elapsed, currentTrack.duration);
                 }
-            }, 100);  // Update every 100ms
+            }, 100);
         }
 
         async function forcePause() {
-            if (currentTrack.player) {
+            try {
+                if (!currentTrack.player) return;
+
+                // Ensure we stop the playback first
                 await currentTrack.player.pause();
                 log('Playback paused');
+
+                currentTrack.isPlaying = false;
+
+                // Clear timers
+                if (currentTrack.progressInterval) {
+                    clearInterval(currentTrack.progressInterval);
+                    currentTrack.progressInterval = null;
+                }
+                if (currentTrack.timeout) {
+                    clearTimeout(currentTrack.timeout);
+                    currentTrack.timeout = null;
+                }
+
+                // Reset UI
+                document.getElementById('play-button').innerHTML = '<i class="fas fa-play"></i>';
+                updateTimeDisplay(currentTrack.duration, currentTrack.duration);
+                document.getElementById('submit-button').disabled = false;
+
+            } catch (error) {
+                log('Error in forcePause: ' + error.message);
             }
-
-            currentTrack.isPlaying = false;
-            if (currentTrack.progressInterval) {
-                clearInterval(currentTrack.progressInterval);
-                currentTrack.progressInterval = null;
-            }
-
-            // Update UI
-            document.getElementById('play-button').innerHTML = '<i class="fas fa-play"></i>';
-            updateTimeDisplay(currentTrack.duration, currentTrack.duration);
-            document.getElementById('submit-button').disabled = false;
-
         }
 
         window.onSpotifyWebPlaybackSDKReady = () => {
@@ -297,7 +316,7 @@
 
             player.addListener('player_state_changed', state => {
                 if (state) {
-                    log('Playback state updated');
+                    log('Playback state updated' + state);
                     const track = state.track_window.current_track;
                 }
             });
@@ -322,49 +341,40 @@
             });
 
             // Play button click handler
-            document.getElementById('play-button').addEventListener('click', async () => {
-                log('Play button clicked');
+        document.getElementById('play-button').addEventListener('click', async () => {
+            log('Play button clicked');
 
-                if (currentTrack.isPlaying) {
-                    await forcePause();
-                    return;
-                }
+            if (currentTrack.isPlaying) {
+                await forcePause();
+                return;
+            }
 
-                fetch("{{ url_for('get_track_to_play') }}")
-                    .then(response => response.json())
-                    .then(async data => {  // Made this async
-                        log(`Starting playback of track: ${data.uri}`);
-                        document.getElementById('play-button').innerHTML = '<i class="fas fa-pause"></i>';
-                        document.getElementById('submit-button').disabled = true;
+            try {
+                const response = await fetch("{{ url_for('get_track_to_play') }}");
+                const data = await response.json();
 
-                        // Start the Spotify playback first
-                        const playbackResponse = await fetch("{{ url_for('play_track') }}", {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                device_id: window.spotifyDeviceId,
-                                uri: data.uri
-                            })
-                        });
-
-                        const playbackData = await playbackResponse.json();
-
-                        if (playbackData.success) {
-                            log('Playback started successfully');
-                            // Only start progress tracking after successful playback start
-                            startProgressUpdate(data.duration); // 1 second duration
-                        } else {
-                            log('Failed to start playback');
-                            await forcePause();
-                        }
+                const playbackResponse = await fetch("{{ url_for('play_track') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        device_id: window.spotifyDeviceId,
+                        uri: data.uri
                     })
-                    .catch(async error => {
-                        log(`Error during playback: ${error.message}`);
-                        await forcePause();
-                    });
-            });
+                });
+
+                if (playbackResponse.ok) {
+                    document.getElementById('play-button').innerHTML = '<i class="fas fa-pause"></i>';
+                    document.getElementById('submit-button').disabled = true;
+                    currentTrack.isPlaying = true;
+                    startProgressUpdate(data.duration);  // Just for UI updates
+                }
+            } catch (error) {
+                log(`Error during playback: ${error.message}`);
+                await forcePause();
+            }
+        });
 
             // Progress bar click handler
             document.getElementById('progress-bar').addEventListener('click', (e) => {
